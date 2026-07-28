@@ -1,13 +1,37 @@
 #include "i_network.hpp"
-#include "tui.hpp"
+#include "ui.hpp"
 #include "node.hpp"
+#include "command_type.hpp"
+#include <iostream>
+#include <string>
+#include "command.hpp"
+
+using namespace mtj_ping;
+using namespace std;
+
 
 int main (int argc, char *argv[]) {
-	// start
-	// init tui
-	// ask tui for comand
-	// switch by command
-	// ask i_network to do work (&ostream - for printing)
-	// send i_network answer to tui
+	ui ui{cout};
+	i_network nw;
+	node nd;
+	vector<node> nds;
+	while(true) {
+		command cmd = ui.get_next();
+		switch(cmd.type) {
+			case command_type::quit:
+				break;
+			case command_type::ping:
+				nd = nw.ping(cmd.arg, ui.out_);
+				break;
+			case command_type::trace:
+				nds = nw.trace(cmd.arg, ui.out_);
+				break;
+			default:
+				ui.out_ << "smth went wrong" << endl;
+				exit;
+				break;
+		}
+	}
+
 	return 0;
 }

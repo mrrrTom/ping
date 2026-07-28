@@ -4,7 +4,9 @@ project(ping
 	DESCRIPTION "Classic ping app and smth more"
 	LANGUAGES CXX)
 add_executable(ping
-	src/tui.hpp
+	src/command.hpp
+	src/command_type.hpp
+	src/ui.hpp
 	src/tui.cpp
 	src/node.hpp
 	src/i_network.hpp
