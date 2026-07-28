@@ -1,9 +1,16 @@
 #ifndef I_NETWORK_MTJ_PING_HPP
 #define I_NETWORK_MTJ_PING_HPP
-#include <string>
 #include <iostream>
-#include <vector>
+#include <string>
+#include "sys/socket.h"
+#include "netinet/in.h"
+#include <arpa/inet.h>
+#include "netinet/ip_icmp.h"
+#include <unistd.h> // getpid
+#include <cstring>
 #include "node.hpp"
+#include <vector>
+
 namespace mtj_ping {
 	class i_network {
 		public:

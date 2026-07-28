@@ -13,7 +13,6 @@ using namespace std;
 int main (int argc, char *argv[]) {
 	ui ui{cout};
 	i_network nw;
-	node nd;
 	vector<node> nds;
 	while(true) {
 		command cmd = ui.get_next();
@@ -21,14 +20,14 @@ int main (int argc, char *argv[]) {
 			case command_type::quit:
 				break;
 			case command_type::ping:
-				nd = nw.ping(cmd.arg, ui.out_);
+				nw.ping(cmd.arg, ui.out_);
 				break;
 			case command_type::trace:
 				nds = nw.trace(cmd.arg, ui.out_);
 				break;
 			default:
 				ui.out_ << "smth went wrong" << endl;
-				exit;
+				return 1;
 				break;
 		}
 	}
