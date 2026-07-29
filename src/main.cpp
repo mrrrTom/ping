@@ -19,9 +19,14 @@ int main (int argc, char *argv[]) {
 		switch(cmd.type) {
 			case command_type::quit:
 				break;
-			case command_type::ping:
-				nw.ping(cmd.arg, ui.out_);
+			case command_type::ping: {
+				node nd = nw.ping(cmd.arg, ui.out_);
+				if (nd.get_status() == node_status::active) {
+					cout << cmd.arg << "success " << nd.get_last_changed() << endl;
+				}
+
 				break;
+			}
 			case command_type::trace:
 				nds = nw.trace(cmd.arg, ui.out_);
 				break;

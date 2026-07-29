@@ -6,6 +6,7 @@
 #include "netinet/in.h"
 #include <arpa/inet.h>
 #include "netinet/ip_icmp.h"
+#include "netinet/ip.h"
 #include <unistd.h> // getpid
 #include <cstring>
 #include "node.hpp"
