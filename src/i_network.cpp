@@ -40,7 +40,7 @@ namespace {
     		return static_cast<uint16_t>(~sum);
 	}
 
-	int acquire_raw_socket_connection(string ip_addr, ostream& out) {
+	int acquire_raw_socket_connection(in_addr ip_addr, ostream& out) {
 		int sock_fd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
 		if (sock_fd == -1) {
 			out << "socket creating went wrong" << endl;
@@ -49,8 +49,9 @@ namespace {
 
 		sockaddr_in hint;
 		hint.sin_family = AF_INET;
-		inet_pton(AF_INET, ip_addr.c_str(), &hint.sin_addr);
-		int connect_result = connect(sock_fd, (sockaddr*)&hint, sizeof(hint));
+		hint.sin_addr = ip_addr;
+		int connect_result = connect(sock_fd, (sockaddr*)&hint,
+				sizeof(hint));
 		if (connect_result == -1) {
 			out << "connection went wrong" << endl;
 			return -1;
@@ -59,9 +60,21 @@ namespace {
 		return sock_fd;
 	}
 
-	string resolve_ip(string address, ostream& out) {
-		// todo
-		return address;
+	in_addr resolve_ip(string address, ostream& out) {
+		addrinfo* addr_info;
+		int status = getaddrinfo(address.c_str(), nullptr, nullptr, &addr_info);
+
+		// https://beej.us/guide/bgnet/html/#structs
+		//To deal with struct sockaddr, programmers created a parallel structure:
+		//struct sockaddr_in (“in” for “Internet”) to be used with IPv4.
+
+		//And this is the important bit: a pointer to a struct sockaddr_in can be
+		//cast to a pointer to a struct sockaddr and vice-versa. So even though
+		//connect() wants a struct sockaddr*, you can still use a struct sockaddr_in
+		//and cast it at the last minute!
+
+		sockaddr_in* ipv4 = (sockaddr_in*)(addr_info -> ai_addr);
+		return ipv4 -> sin_addr;
 	}
 
 	icmphdr create_request_icmp_header() {
@@ -89,7 +102,7 @@ namespace {
 
 namespace mtj_ping {
 	node i_network::ping(string address, ostream& out) {
-		string ip_addr = resolve_ip(address, out);
+		in_addr ip_addr = resolve_ip(address, out);
 		int sock_fd = acquire_raw_socket_connection(ip_addr, out);
 		icmphdr icmp_request_header = create_request_icmp_header();
 		int s_result = send(sock_fd, &icmp_request_header, sizeof(icmp_request_header), 0);

@@ -11,6 +11,7 @@
 #include <cstring>
 #include "node.hpp"
 #include <vector>
+#include "netdb.h"
 
 namespace mtj_ping {
 	class i_network {

@@ -8,7 +8,16 @@
 
 using namespace mtj_ping;
 using namespace std;
-
+namespace {
+	void ping(command& cmd, ui ui, i_network nw) {
+		node nd = nw.ping(cmd.arg, ui.out_);
+		if (nd.get_status() == node_status::active) {
+			time_t time_stamp = nd.get_last_changed();
+			ui.out_<< "\nping " << cmd.arg << " succeded "
+				<< ctime(&time_stamp) << endl;
+		}
+	}
+}
 
 int main (int argc, char *argv[]) {
 	ui ui{cout};
@@ -20,11 +29,7 @@ int main (int argc, char *argv[]) {
 			case command_type::quit:
 				break;
 			case command_type::ping: {
-				node nd = nw.ping(cmd.arg, ui.out_);
-				if (nd.get_status() == node_status::active) {
-					cout << cmd.arg << "success " << nd.get_last_changed() << endl;
-				}
-
+				ping(cmd, ui, nw);
 				break;
 			}
 			case command_type::trace:
