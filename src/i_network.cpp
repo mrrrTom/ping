@@ -74,6 +74,8 @@ namespace {
 		//and cast it at the last minute!
 
 		sockaddr_in* ipv4 = (sockaddr_in*)(addr_info -> ai_addr);
+		const char* resolved_ip = inet_ntoa(ipv4 -> sin_addr);
+		out << ">resolved address: " << resolved_ip << endl;
 		return ipv4 -> sin_addr;
 	}
 

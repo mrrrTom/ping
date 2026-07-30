@@ -13,7 +13,7 @@ namespace {
 		node nd = nw.ping(cmd.arg, ui.out_);
 		if (nd.get_status() == node_status::active) {
 			time_t time_stamp = nd.get_last_changed();
-			ui.out_<< "\nping " << cmd.arg << " succeded "
+			ui.out_<< ">ping " << cmd.arg << " succeded "
 				<< ctime(&time_stamp) << endl;
 		}
 	}
