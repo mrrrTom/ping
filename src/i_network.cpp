@@ -19,6 +19,7 @@ namespace {
 			+ icmp_max_header_size
 			+ ipv4_max_header_size
 			+ icmp_ip_data_copy_size); // https://www.rfc-editor.org/info/rfc792/
+	constexpr int socket_timeout_sec = 1;
 
 	// The checksum is the 16-bit ones's complement of the one's
       	// complement sum of the ICMP message starting with the ICMP Type.
@@ -57,6 +58,13 @@ namespace {
 			return -1;
 		}
 
+		// Define the timeout value
+    		struct timeval timeout;
+    		timeout.tv_sec = socket_timeout_sec;  // Timeout in seconds
+    		timeout.tv_usec = 0; // Timeout in microseconds
+
+    		// Set the timeout for receiving data
+    		setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 		return sock_fd;
 	}
 
@@ -90,7 +98,12 @@ namespace {
 		return header;
 	}
 
-	node resolve_node_from_icmp_echo_answer(string address, uint8_t* buf, ostream& out) {
+	node resolve_node_from_icmp_echo_answer(int response_size, string address, uint8_t* buf, ostream& out) {
+		if (response_size == -1) {
+			out << ">bad answer" << endl;
+			return node{address, node_status::failed, time(nullptr)};
+		}
+
 		icmphdr* response_header = reinterpret_cast<icmphdr*>(buf
 						+ ipv4_max_header_size);
 		if (response_header -> type == 0 &&
@@ -98,7 +111,7 @@ namespace {
 			return node(address, node_status::active, time(nullptr));
 		}
 
-		return node(address, node_status::failed, time(nullptr));
+		return node{address, node_status::failed, time(nullptr)};
 	}
 }
 
@@ -111,7 +124,7 @@ namespace mtj_ping {
 
 		uint8_t response_packet[icmpv4_max_packet_size] {};
 		int response_size = recv(sock_fd, &response_packet, sizeof(response_packet), 0);
-		node result = resolve_node_from_icmp_echo_answer(address, response_packet, out);
+		node result = resolve_node_from_icmp_echo_answer(response_size, address, response_packet, out);
 		return result;
 	}
 
