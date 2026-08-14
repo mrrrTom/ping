@@ -44,7 +44,8 @@ namespace {
 	int acquire_raw_socket_connection(in_addr ip_addr, ostream& out) {
 		int sock_fd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
 		if (sock_fd == -1) {
-			out << "socket creating went wrong" << endl;
+			out << "> socket creating went wrong:" << endl;
+			out << "> " << strerror(errno) << endl;
 			return -1;
 		}
 
@@ -119,6 +120,7 @@ namespace mtj_ping {
 	node i_network::ping(string address, ostream& out) {
 		in_addr ip_addr = resolve_ip(address, out);
 		int sock_fd = acquire_raw_socket_connection(ip_addr, out);
+		//ToDo - do i need to procces further, if the fd is -1 ?
 		icmphdr icmp_request_header = create_request_icmp_header();
 		int s_result = send(sock_fd, &icmp_request_header, sizeof(icmp_request_header), 0);
 
