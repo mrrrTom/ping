@@ -13,12 +13,12 @@ namespace {
 		node nd = nw.ping(cmd.arg, ui.out_);
 		if (nd.get_status() == node_status::active) {
 			time_t time_stamp = nd.get_last_changed();
-			ui.out_<< ">ping " << cmd.arg << " succeded "
+			ui.out_<< "> ping " << cmd.arg << " succeded "
 				<< ctime(&time_stamp) << endl;
 		}
 		else if (nd.get_status() == node_status::failed) {
 			time_t time_stamp = nd.get_last_changed();
-			ui.out_ << ">pinging " << cmd.arg << " failed "
+			ui.out_ << "> pinging " << cmd.arg << " failed "
 				<< ctime(&time_stamp) << endl;
 		}
 	}
@@ -42,7 +42,7 @@ int main (int argc, char *argv[]) {
 				break;
 			default:
 				ui.out_
-				<< "resolving command went wrong" << endl;
+				<< "> resolving command went wrong" << endl;
 				return 1;
 				break;
 		}

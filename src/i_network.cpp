@@ -55,7 +55,7 @@ namespace {
 		int connect_result = connect(sock_fd, (sockaddr*)&hint,
 				sizeof(hint));
 		if (connect_result == -1) {
-			out << "connection went wrong" << endl;
+			out << "> connection went wrong" << endl;
 			return -1;
 		}
 
@@ -84,7 +84,7 @@ namespace {
 
 		sockaddr_in* ipv4 = (sockaddr_in*)(addr_info -> ai_addr);
 		const char* resolved_ip = inet_ntoa(ipv4 -> sin_addr);
-		out << ">resolved address: " << resolved_ip << endl;
+		out << "> resolved address: " << resolved_ip << endl;
 		return ipv4 -> sin_addr;
 	}
 
@@ -101,7 +101,7 @@ namespace {
 
 	node resolve_node_from_icmp_echo_answer(int response_size, string address, uint8_t* buf, ostream& out) {
 		if (response_size == -1) {
-			out << ">bad answer" << endl;
+			out << "> bad answer" << endl;
 			return node{address, node_status::failed, time(nullptr)};
 		}
 
