@@ -3,6 +3,6 @@ Ping + trace functionality + may be in future - some net scanning and graph visu
 Ping functionality includes small problems log, that should help to localize problem, when u are trying to ping smth and it does not work.
 
 usage:
-cd <build directory>
-cmake
-sudo ./ping
+1. cd <build directory>
+2. cmake
+3. sudo ./ping
