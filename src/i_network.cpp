@@ -130,4 +130,5 @@ namespace mtj_ping {
 
 	vector<node> i_network::trace(string address, ostream& out) {
 	}
+
 }
