@@ -12,5 +12,16 @@ add_executable(ping
 	src/i_network.hpp
 	src/i_network.cpp
 	src/main.cpp)
+find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+add_executable(tests
+	src/command.hpp
+	src/command_type.hpp
+	src/ui.hpp
+	src/tui.cpp
+	src/node.hpp
+	src/i_network.hpp
+	src/i_network.cpp
+	tests/ping_tests.cpp)
+target_link_libraries(tests PRIVATE Boost::unit_test_framework)
 target_compile_features(ping PRIVATE cxx_std_20)
 target_compile_options(ping PRIVATE -Wall -Wextra -Wpedantic)
