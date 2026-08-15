@@ -109,6 +109,7 @@ namespace {
 	node resolve_node_from_icmp_echo_answer(int response_size, string address, uint8_t* buf, ostream& out) {
 		if (response_size == -1) {
 			out << "> bad answer" << endl;
+			out << "> " << strerror(errno) << endl;
 			return node{address, node_status::failed, time(nullptr)};
 		}
 
@@ -149,5 +150,4 @@ namespace mtj_ping {
 
 	vector<node> i_network::trace(string address, ostream& out) {
 	}
-
 }
