@@ -1,5 +1,6 @@
 # TODO
 ## PING
+- [ ] add diagnostic and fix failure on unexisting address
 - [ ] return bad status on not available
 - [ ] add diagnostic out if not working ?net interface?
 ## TRACE
