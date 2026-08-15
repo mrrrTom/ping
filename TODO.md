@@ -1,5 +1,6 @@
 # TODO
 ## PING
+- [ ] do I need to close sockets?
 - [ ] add diagnostic out if not working ?net interface?
 ## TRACE
 - [ ] simple scenario - return al ips
