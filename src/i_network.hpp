@@ -18,6 +18,7 @@ namespace mtj_ping {
 		public:
 			node ping(string address, ostream& out);
 			vector<node> trace(string address, ostream& out);
+			i_network();
 	};
 }
 #endif // !I_NETWORK_MTJ_PING_HPP

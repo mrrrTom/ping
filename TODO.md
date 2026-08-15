@@ -1,5 +1,6 @@
 # TODO
 ## PING
+- [ ] check up net devices on i_network start
 - [ ] do I need to close sockets?
 - [ ] add diagnostic out if not working ?net interface?
 ## TRACE

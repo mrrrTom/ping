@@ -76,7 +76,8 @@ namespace {
 		int error = getaddrinfo(input_address.c_str(), nullptr, nullptr, &addr_info);
 		if (error != 0) {
 			out << "> name resolution went wrong:" << endl;
-			out << gai_strerror(error) << endl;
+			out << "> " << gai_strerror(error) << endl;
+			out << "> " << strerror(errno) << endl;
 			return false;
 		}
 		// https://beej.us/guide/bgnet/html/#structs
@@ -125,6 +126,12 @@ namespace {
 }
 
 namespace mtj_ping {
+	i_network::i_network() {
+		// ToDo check all net devices - is smth up
+		// /sys/class/net all in this folder
+		// foreach operstate - up|down
+	}
+
 	node i_network::ping(string address, ostream& out) {
 		in_addr ip_addr;
 		bool ip_resolved = try_resolve_ip(address, out, ip_addr);
