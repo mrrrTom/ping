@@ -1,6 +1,5 @@
 # TODO
 ## PING
-- [ ] return bad status on not available
 - [ ] add diagnostic out if not working ?net interface?
 ## TRACE
 - [ ] simple scenario - return al ips
@@ -10,6 +9,7 @@
 - [ ] output graph
 - [ ] find out about scanning network - may be on can look through route table?
 # DONE
+- [x] return bad status on not available
 - [x] add diagnostic and fix failure on unexisting address
 - [x] simple test with localhost
 - [x] add diagnostic out if unsuf right for ping
