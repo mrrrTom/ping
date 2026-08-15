@@ -21,6 +21,9 @@ namespace {
 			ui.out_ << "> pinging " << cmd.arg << " failed "
 				<< ctime(&time_stamp) << endl;
 		}
+		else if (nd.get_status() == node_status::unknown) {
+			ui.out_ << "> could not send a ping msg" << endl;
+		}
 	}
 }
 
@@ -46,6 +49,8 @@ int main (int argc, char *argv[]) {
 				return 1;
 				break;
 		}
+
+		cout << endl;
 	}
 
 	return 0;

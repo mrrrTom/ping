@@ -69,10 +69,16 @@ namespace {
 		return sock_fd;
 	}
 
-	in_addr resolve_ip(string address, ostream& out) {
+	bool try_resolve_ip(const string input_address, ostream& out, in_addr& result_ip) {
 		addrinfo* addr_info;
-		int status = getaddrinfo(address.c_str(), nullptr, nullptr, &addr_info);
 
+		//posix
+		int error = getaddrinfo(input_address.c_str(), nullptr, nullptr, &addr_info);
+		if (error != 0) {
+			out << "> name resolution went wrong:" << endl;
+			out << gai_strerror(error) << endl;
+			return false;
+		}
 		// https://beej.us/guide/bgnet/html/#structs
 		//To deal with struct sockaddr, programmers created a parallel structure:
 		//struct sockaddr_in (“in” for “Internet”) to be used with IPv4.
@@ -85,7 +91,8 @@ namespace {
 		sockaddr_in* ipv4 = (sockaddr_in*)(addr_info -> ai_addr);
 		const char* resolved_ip = inet_ntoa(ipv4 -> sin_addr);
 		out << "> resolved address: " << resolved_ip << endl;
-		return ipv4 -> sin_addr;
+		result_ip = ipv4 -> sin_addr;
+		return true;
 	}
 
 	icmphdr create_request_icmp_header() {
@@ -118,9 +125,19 @@ namespace {
 
 namespace mtj_ping {
 	node i_network::ping(string address, ostream& out) {
-		in_addr ip_addr = resolve_ip(address, out);
+		in_addr ip_addr;
+		bool ip_resolved = try_resolve_ip(address, out, ip_addr);
+		if (!ip_resolved) {
+			out << "> could not resolve the ip address" << endl;
+			return node{address, node_status::unknown, time(nullptr)};
+		}
+
 		int sock_fd = acquire_raw_socket_connection(ip_addr, out);
-		//ToDo - do i need to procces further, if the fd is -1 ?
+		if (sock_fd == -1) {
+			out << "> could not acquire socket" << endl;
+			return node{address, node_status::unknown, time(nullptr)};
+		}
+
 		icmphdr icmp_request_header = create_request_icmp_header();
 		int s_result = send(sock_fd, &icmp_request_header, sizeof(icmp_request_header), 0);
 
