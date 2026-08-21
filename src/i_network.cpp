@@ -101,7 +101,7 @@ namespace {
 		header.type = ICMP_ECHO; //8 it is
 		header.code = icmp_echo_request_code; // icmp protocol: echo request = 8 + 0 : https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol
 		header.un.echo.id = static_cast<uint16_t>(getpid() & 0xFFFF); // for sender process identification
-		headhttps://www.rfc-editor.org/info/rfc792/er.un.echo.sequence = 1;
+		headhttps: //www.rfc-editor.org/info/rfc792/er.un.echo.sequence = 1;
     		header.checksum = 0;
     		header.checksum = checksum16(&header, sizeof(header)); // do i realy need this?
 		return header;
@@ -180,5 +180,36 @@ namespace mtj_ping {
 	}
 
 	vector<node> i_network::trace(string address, ostream& out) {
+		in_addr ip_addr;
+		bool ip_resolved = try_resolve_ip(address, out, ip_addr);
+		if (!ip_resolved) {
+			out << "> could not resolve the ip address" << endl;
+			return vector<node> { node{address, node_status::unknown, time(nullptr)}};
+		}
+
+		int sock_fd = acquire_raw_socket_connection(ip_addr, out);
+		if (sock_fd == -1) {
+			out << "> could not acquire socket" << endl;
+			return vector<node> { node{ address, node_status::unknown, time(nullptr)}};
+		}
+
+		// u can set ttl by just setting socket option ... - > https://github.com/markondej/cpp-icmplib/blob/master/icmplib.h
+		// compare result of your trace with traceroute
+		//
+		//
+		// create icmp header
+		//
+		// create ip header - somehow need to set TTL (will be increased in cycle)
+		//
+		// send / get response
+		//
+		// parce icmp header (make sure, it is echo reply)
+		//
+		// parce ipheader - get ip address
+		//
+		//Time to live 1 or 0?
+		//send ip req
+		//get response
+		//response is ip message
 	}
 }
