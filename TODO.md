@@ -1,6 +1,5 @@
 # TODO
 ## PING
-- [ ] do I need to close sockets?
 ## TRACE
 - [ ] simple scenario - return al ips
 - [ ] simple test with localhost
@@ -9,6 +8,7 @@
 - [ ] output graph
 - [ ] find out about scanning network - may be on can look through route table?
 # DONE
+- [x] close sockets after get response
 - [x] add diagnostic out if not working ?net interface?
 - [x] check up net devices on i_network start
 - [x] return bad status on not available

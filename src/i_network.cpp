@@ -174,6 +174,7 @@ namespace mtj_ping {
 
 		uint8_t response_packet[icmpv4_max_packet_size] {};
 		int response_size = recv(sock_fd, &response_packet, sizeof(response_packet), 0);
+		close(sock_fd);
 		node result = resolve_node_from_icmp_echo_answer(response_size, address, response_packet, out);
 		return result;
 	}
