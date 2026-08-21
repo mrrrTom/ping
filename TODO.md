@@ -1,8 +1,6 @@
 # TODO
 ## PING
-- [ ] check up net devices on i_network start
 - [ ] do I need to close sockets?
-- [ ] add diagnostic out if not working ?net interface?
 ## TRACE
 - [ ] simple scenario - return al ips
 - [ ] simple test with localhost
@@ -11,6 +9,8 @@
 - [ ] output graph
 - [ ] find out about scanning network - may be on can look through route table?
 # DONE
+- [x] add diagnostic out if not working ?net interface?
+- [x] check up net devices on i_network start
 - [x] return bad status on not available
 - [x] add diagnostic and fix failure on unexisting address
 - [x] simple test with localhost
