@@ -4,6 +4,7 @@
 - [ ] simple scenario - return al ips
 - [ ] simple test with localhost
 ## MAP
+- [ ] add map command
 - [ ] support multiple ips request
 - [ ] output graph
 - [ ] find out about scanning network - may be on can look through route table?
@@ -17,3 +18,4 @@
 - [x] add diagnostic out if unsuf right for ping
 - [x] resolve dns
 # SOMETIMES
+- [ ] support ipv6
