@@ -35,7 +35,7 @@ int main (int argc, char *argv[]) {
 		command cmd = ui.get_next();
 		switch(cmd.type) {
 			case command_type::quit:
-				break;
+				return 0;
 			case command_type::ping: {
 				ping(cmd, ui, nw);
 				break;

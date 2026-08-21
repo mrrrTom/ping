@@ -5,6 +5,7 @@ namespace {
 	command_type convert(string src) {
 		if(src == "ping") return command_type::ping;
 		if(src == "trace") return command_type::trace;
+		if(src == "quit") return command_type::quit;
 		throw runtime_error("Bad command type convertion" + src);
 	}
 }
