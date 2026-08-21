@@ -128,8 +128,31 @@ namespace {
 namespace mtj_ping {
 	i_network::i_network() {
 		// ToDo check all net devices - is smth up
-		// /sys/class/net all in this folder
-		// foreach operstate - up|down
+		const char* dir = _net_devices_dir.c_str();
+		struct stat sb;
+		if (stat(dir, &sb) != 0) {
+			cout << "> no information about net devices" << endl;
+			return;
+		}
+
+		vector<string> devices;
+		for (auto entry : filesystem::directory_iterator(dir)) {
+			devices.push_back(entry.path());
+		}
+
+		for (string device_dir : devices) {
+			string state_file_path = device_dir + "/" + _state_file_name;
+			ifstream fs(state_file_path);
+			if (!fs.is_open()) {
+				cout << "> could not get state of " << device_dir << endl;
+				continue;
+			}
+
+			string state;
+			getline(fs, state);
+			cout << "> device " << device_dir << " state: " << state << endl;
+			fs.close();
+		}
 	}
 
 	node i_network::ping(string address, ostream& out) {

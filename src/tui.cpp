@@ -15,9 +15,9 @@ namespace mtj_ping {
 		out << "what to do (ping <address> or trace <address>)?" << endl;
 		string c_type;
 		cin >> c_type;
-		string address;
-		cin >> address;
 		command_type ct = convert(c_type);
+		string address;
+		if (ct != command_type::quit) cin >> address;
 		command cmd{ct, address};
 		return cmd;
 	}
