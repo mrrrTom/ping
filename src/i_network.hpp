@@ -15,12 +15,13 @@
 #include <sys/stat.h>
 #include <filesystem>
 #include <fstream>
-
+#include "netinet/ip.h"
 namespace mtj_ping {
 	class i_network {
 		private:
 			const string _net_devices_dir = "/sys/class/net/";
 			const string _state_file_name = "operstate";
+			const int _trace_tries_max = 100;
 		public:
 			node ping(string address, ostream& out);
 			vector<node> trace(string address, ostream& out);

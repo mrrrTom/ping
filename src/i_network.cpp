@@ -41,7 +41,7 @@ namespace {
     		return static_cast<uint16_t>(~sum);
 	}
 
-	int acquire_raw_socket_connection(in_addr ip_addr, ostream& out) {
+	int acquire_raw_socket_connection(in_addr ip_addr, ostream& out, uint8_t ttl = 0) {
 		int sock_fd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
 		if (sock_fd == -1) {
 			out << "> socket creating went wrong:" << endl;
@@ -64,12 +64,15 @@ namespace {
     		timeout.tv_sec = socket_timeout_sec;  // Timeout in seconds
     		timeout.tv_usec = 0; // Timeout in microseconds
 
+		if (ttl > 0) {
+			setsockopt(sock_fd, IPPROTO_IP, IP_TTL, reinterpret_cast<char*>(&ttl), sizeof(uint8_t));
+		}
     		// Set the timeout for receiving data
     		setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 		return sock_fd;
 	}
 
-	bool try_resolve_ip(const string input_address, ostream& out, in_addr& result_ip) {
+	bool try_resolve_ip(const string input_address, ostream& out, in_addr& result_ip, string& result_s_ip) {
 		addrinfo* addr_info;
 
 		//posix
@@ -92,6 +95,7 @@ namespace {
 		sockaddr_in* ipv4 = (sockaddr_in*)(addr_info -> ai_addr);
 		const char* resolved_ip = inet_ntoa(ipv4 -> sin_addr);
 		out << "> resolved address: " << resolved_ip << endl;
+		result_s_ip = resolved_ip;
 		result_ip = ipv4 -> sin_addr;
 		return true;
 	}
@@ -114,11 +118,14 @@ namespace {
 			return node{address, node_status::failed, time(nullptr)};
 		}
 
+		iphdr* ip = reinterpret_cast<iphdr*>(buf);
+		char IPv4_response_addr[INET_ADDRSTRLEN];
+		inet_ntop(AF_INET, &ip -> saddr, IPv4_response_addr, sizeof(IPv4_response_addr));
 		icmphdr* response_header = reinterpret_cast<icmphdr*>(buf
 						+ ipv4_max_header_size);
 		if (response_header -> type == 0 &&
 		    response_header -> code == 0) {
-			return node(address, node_status::active, time(nullptr));
+			return node(IPv4_response_addr, node_status::active, time(nullptr));
 		}
 
 		return node{address, node_status::failed, time(nullptr)};
@@ -127,7 +134,6 @@ namespace {
 
 namespace mtj_ping {
 	i_network::i_network() {
-		// ToDo check all net devices - is smth up
 		const char* dir = _net_devices_dir.c_str();
 		struct stat sb;
 		if (stat(dir, &sb) != 0) {
@@ -157,7 +163,8 @@ namespace mtj_ping {
 
 	node i_network::ping(string address, ostream& out) {
 		in_addr ip_addr;
-		bool ip_resolved = try_resolve_ip(address, out, ip_addr);
+		string ip_s_addr;
+		bool ip_resolved = try_resolve_ip(address, out, ip_addr, ip_s_addr);
 		if (!ip_resolved) {
 			out << "> could not resolve the ip address" << endl;
 			return node{address, node_status::unknown, time(nullptr)};
@@ -181,35 +188,38 @@ namespace mtj_ping {
 
 	vector<node> i_network::trace(string address, ostream& out) {
 		in_addr ip_addr;
-		bool ip_resolved = try_resolve_ip(address, out, ip_addr);
+		string ip_s_addr;
+		bool ip_resolved = try_resolve_ip(address, out, ip_addr, ip_s_addr);
 		if (!ip_resolved) {
 			out << "> could not resolve the ip address" << endl;
 			return vector<node> { node{address, node_status::unknown, time(nullptr)}};
 		}
 
-		int sock_fd = acquire_raw_socket_connection(ip_addr, out);
-		if (sock_fd == -1) {
-			out << "> could not acquire socket" << endl;
-			return vector<node> { node{ address, node_status::unknown, time(nullptr)}};
+		string responded = "";
+		uint8_t try_number = 0;
+		vector<node> result;
+		// now it seems that option is set, but I can not see full response..
+		while (responded != ip_s_addr && try_number < _trace_tries_max) {
+			uint8_t ttl = try_number + 1;
+			int sock_fd = acquire_raw_socket_connection(ip_addr, out, ttl);
+			if (sock_fd == -1) {
+				out << "> could not acquire socket" << endl;
+				return vector<node> { node{ address, node_status::unknown, time(nullptr)}};
+			}
+
+			icmphdr icmp_request_header = create_request_icmp_header();
+			int s_result = send(sock_fd, &icmp_request_header, sizeof(icmp_request_header), 0);
+
+			uint8_t response_packet[icmpv4_max_packet_size] {};
+			int response_size = recv(sock_fd, &response_packet, sizeof(response_packet), 0);
+			close(sock_fd);
+
+			node responded_srv = resolve_node_from_icmp_echo_answer(response_size, address, response_packet, out);
+			responded = responded_srv.get_addr();
+			result.push_back(responded_srv);
+			try_number++;
 		}
 
-		// u can set ttl by just setting socket option ... - > https://github.com/markondej/cpp-icmplib/blob/master/icmplib.h
-		// compare result of your trace with traceroute
-		//
-		//
-		// create icmp header
-		//
-		// create ip header - somehow need to set TTL (will be increased in cycle)
-		//
-		// send / get response
-		//
-		// parce icmp header (make sure, it is echo reply)
-		//
-		// parce ipheader - get ip address
-		//
-		//Time to live 1 or 0?
-		//send ip req
-		//get response
-		//response is ip message
+		return result;
 	}
 }

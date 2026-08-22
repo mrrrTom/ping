@@ -25,6 +25,18 @@ namespace {
 			ui.out_ << "> could not send a ping msg" << endl;
 		}
 	}
+
+	void trace(command&cmd, ui ui, i_network nw) {
+		vector<node> response = nw.trace(cmd.arg, ui.out_);
+		if (response.size() == 0)
+			ui.out_ << "> trace failed, no node found" << endl;
+		for (int i = 0; i < response.size(); ++i) {
+			node nd = response[i];
+			time_t time_stamp = nd.get_last_changed();
+			ui.out_ << "> responded " << nd.get_addr() << " at "
+				<< ctime(&time_stamp) << endl;
+		}
+	}
 }
 
 int main (int argc, char *argv[]) {
@@ -41,6 +53,7 @@ int main (int argc, char *argv[]) {
 				break;
 			}
 			case command_type::trace:
+				trace(cmd, ui, nw);
 				nds = nw.trace(cmd.arg, ui.out_);
 				break;
 			default:
