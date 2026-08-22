@@ -8,6 +8,8 @@
 - [ ] support multiple ips request
 - [ ] output graph
 - [ ] find out about scanning network - may be on can look through route table?
+## GENERAL
+- [ ] first realease (may be the last one)
 # DONE
 - [x] close sockets after get response
 - [x] add diagnostic out if not working ?net interface?
