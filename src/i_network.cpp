@@ -48,7 +48,7 @@ namespace {
 			out << "> " << strerror(errno) << endl;
 			return -1;
 		}
-
+/*
 		sockaddr_in hint;
 		hint.sin_family = AF_INET;
 		in_addr ip_addr;
@@ -60,7 +60,7 @@ namespace {
 			out << "> connection went wrong" << endl;
 			return -1;
 		}
-
+*/
 		// Define the timeout value
     		struct timeval timeout;
     		timeout.tv_sec = socket_timeout_sec;  // Timeout in seconds
@@ -68,13 +68,17 @@ namespace {
 		setsockopt(sock_fd, IPPROTO_IP, IP_TTL, reinterpret_cast<char*>(&ttl), sizeof(uint8_t));
     		// Set the timeout for receiving data
     		setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+
+		// experimental option - remove it may be
+    		bool dwIpRecvFlags = IP_RECVTTL;
+    		setsockopt(sock_fd, IPPROTO_IP, IP_RECVTTL, (char*)&dwIpRecvFlags, sizeof(dwIpRecvFlags));
 		return sock_fd;
 	}
 
 	void resolve_addr_hint(in_addr ip_addr, sockaddr_in* empty_hint, sockaddr* result) {
 		empty_hint->sin_family = AF_INET;
 		empty_hint->sin_addr = ip_addr;
-		*result = *(reinterpret_cast<sockaddr*>(&empty_hint));
+		*result = *(reinterpret_cast<sockaddr*>(empty_hint));
 	}
 
 	int acquire_raw_socket_connection(in_addr ip_addr, ostream& out) {
@@ -137,7 +141,7 @@ namespace {
 		header.type = ICMP_ECHO; //8 it is
 		header.code = icmp_echo_request_code; // icmp protocol: echo request = 8 + 0 : https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol
 		header.un.echo.id = static_cast<uint16_t>(getpid() & 0xFFFF); // for sender process identification
-		headhttps: //www.rfc-editor.org/info/rfc792/er.un.echo.sequence = 1;
+		//headhttps: //www.rfc-editor.org/info/rfc792/er.un.echo.sequence = 1;
     		header.checksum = 0;
     		header.checksum = checksum16(&header, sizeof(header)); // do i realy need this?
 		return header;
@@ -241,12 +245,22 @@ namespace mtj_ping {
 			sockaddr_in empty_hint;
 			sockaddr send_address;
 			resolve_addr_hint(ip_addr, &empty_hint, &send_address);
-			int s_result = sendto(sock_fd, &icmp_request_header, sizeof(icmp_request_header), 0, &send_address, sizeof(send_address));
+			int s_result = sendto(sock_fd, &icmp_request_header, sizeof(icmp_request_header), 0, &send_address, sizeof(empty_hint));
+			if (s_result == -1) {
+				out << "> could not send icmp msg via acquired socket" << endl;
+				return vector<node> { node { address, node_status::unknown, time(nullptr)}};
+			}
 
 			uint8_t response_packet[icmpv4_max_packet_size] {};
 
+			in_addr any_address;
+			any_address.s_addr = INADDR_ANY;
+			sockaddr recieve_address;
+			resolve_addr_hint(any_address, &empty_hint, &recieve_address);
 			// do i really need to use recv? how can i listen for the socket?
-			int response_size = recv(sock_fd, &response_packet, sizeof(response_packet), 0);
+			socklen_t size_of_recieve_address = sizeof(empty_hint);
+			int response_size = recvfrom(sock_fd, &response_packet, sizeof(response_packet), 0,
+			&recieve_address, &size_of_recieve_address);
 			close(sock_fd);
 
 // after recv, i got the errno = 11 (TRYAGAIN - look at the errrnobase.h)
