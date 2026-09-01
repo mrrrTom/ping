@@ -9,6 +9,7 @@
 - [ ] output graph
 - [ ] find out about scanning network - may be on can look through route table?
 ## GENERAL
+- [ ] gh tests run on push (actions)
 - [ ] first realease (may be the last one)
 # DONE
 - [x] close sockets after get response

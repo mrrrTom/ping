@@ -88,7 +88,7 @@ namespace {
 		sockaddr_in empty_hint;
 		sockaddr address;
 		resolve_addr_hint(ip_addr, &empty_hint, &address);
-		int connect_result = connect(sock_fd, &address, sizeof(address));
+		int connect_result = connect(sock_fd, &address, sizeof(empty_hint));
 		if (connect_result == -1) {
 			out << "> connection went wrong" << endl;
 			return -1;
