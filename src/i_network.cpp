@@ -41,40 +41,37 @@ namespace {
     		return static_cast<uint16_t>(~sum);
 	}
 
-	int acquire_raw_socket_connection(ostream& out, uint8_t ttl) {
+	int acquire_raw_socket(ostream& out, uint8_t ttl) {
+		int sock_fd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW);
+		if (sock_fd == -1) {
+			out << "> socket creating went wrong:" << endl;
+			out << "> " << strerror(errno) << endl;
+			return -1;
+		}
+
+		if (setsockopt(sock_fd, SOL_IP, IP_TTL, &ttl, sizeof(ttl)) < 0) {
+			out << "> setting ttl failed" << endl;
+			return -1;
+		}
+
+		return sock_fd;
+	}
+
+	int acquire_raw_icmp_socket(ostream& out) {
 		int sock_fd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
 		if (sock_fd == -1) {
 			out << "> socket creating went wrong:" << endl;
 			out << "> " << strerror(errno) << endl;
 			return -1;
 		}
-/*
-		sockaddr_in hint;
-		hint.sin_family = AF_INET;
-		in_addr ip_addr;
-		ip_addr.s_addr = INADDR_ANY;
-		hint.sin_addr = ip_addr;
-		int connect_result = connect(sock_fd, (sockaddr*)&hint,
-				sizeof(hint));
-		if (connect_result == -1) {
-			out << "> connection went wrong" << endl;
-			return -1;
-		}
-*/
-		// Define the timeout value
+
+
     		struct timeval timeout;
     		timeout.tv_sec = socket_timeout_sec;  // Timeout in seconds
     		timeout.tv_usec = 0; // Timeout in microseconds
-		setsockopt(sock_fd, IPPROTO_IP, IP_TTL, reinterpret_cast<char*>(&ttl), sizeof(uint8_t));
-    		// Set the timeout for receiving data
     		setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
-
-		// experimental option - remove it may be
-    		bool dwIpRecvFlags = IP_RECVTTL;
-    		setsockopt(sock_fd, IPPROTO_IP, IP_RECVTTL, (char*)&dwIpRecvFlags, sizeof(dwIpRecvFlags));
 		return sock_fd;
 	}
-
 	void resolve_addr_hint(in_addr ip_addr, sockaddr_in* empty_hint, sockaddr* result) {
 		empty_hint->sin_family = AF_INET;
 		empty_hint->sin_addr = ip_addr;
@@ -235,33 +232,34 @@ namespace mtj_ping {
 		vector<node> result;
 		while (responded != ip_s_addr && try_number < _trace_tries_max) {
 			uint8_t ttl = try_number + 1;
-			int sock_fd = acquire_raw_socket_connection(out, ttl);
-			if (sock_fd == -1) {
-				out << "> could not acquire socket" << endl;
+			int raw_sending_sock_fd = acquire_raw_socket(out, ttl);
+			if (raw_sending_sock_fd == -1) {
+				out << "> could not acquire raw sending socket" << endl;
 				return vector<node> { node{ address, node_status::unknown, time(nullptr)}};
 			}
-
+// 1. can i set ttl without using raw socket
+// 2. i can check it - send icmp request like before (and setopt for ttl) - read packet on ascraeus
+// or may be use netcat or smth like that
+// if no - than must create all header (ip and icmp) from scratch
 			icmphdr icmp_request_header = create_request_icmp_header();
 			sockaddr_in empty_hint;
 			sockaddr send_address;
 			resolve_addr_hint(ip_addr, &empty_hint, &send_address);
-			int s_result = sendto(sock_fd, &icmp_request_header, sizeof(icmp_request_header), 0, &send_address, sizeof(empty_hint));
+			int s_result = sendto(raw_sending_sock_fd, &icmp_request_header, sizeof(icmp_request_header), 0, &send_address, sizeof(empty_hint));
 			if (s_result == -1) {
 				out << "> could not send icmp msg via acquired socket" << endl;
 				return vector<node> { node { address, node_status::unknown, time(nullptr)}};
 			}
 
-			uint8_t response_packet[icmpv4_max_packet_size] {};
+			close(raw_sending_sock_fd);
 
-			in_addr any_address;
-			any_address.s_addr = INADDR_ANY;
+			int raw_recieving_sock_fd = acquire_raw_icmp_socket(out);
+			uint8_t response_packet[icmpv4_max_packet_size] {};
 			sockaddr recieve_address;
-			resolve_addr_hint(any_address, &empty_hint, &recieve_address);
-			// do i really need to use recv? how can i listen for the socket?
 			socklen_t size_of_recieve_address = sizeof(empty_hint);
-			int response_size = recvfrom(sock_fd, &response_packet, sizeof(response_packet), 0,
+			int response_size = recvfrom(raw_recieving_sock_fd, &response_packet, sizeof(response_packet), 0,
 			&recieve_address, &size_of_recieve_address);
-			close(sock_fd);
+			close(raw_recieving_sock_fd);
 
 // after recv, i got the errno = 11 (TRYAGAIN - look at the errrnobase.h)
 			node responded_srv = resolve_node_from_icmp_echo_answer(response_size, address, response_packet, out);
