@@ -19,7 +19,7 @@ namespace {
 			+ icmp_max_header_size
 			+ ipv4_max_header_size
 			+ icmp_ip_data_copy_size); // https://www.rfc-editor.org/info/rfc792/
-	constexpr int socket_timeout_sec = 60;
+	constexpr int socket_timeout_sec = 2;
 
 	// The checksum is the 16-bit ones's complement of the one's
       	// complement sum of the ICMP message starting with the ICMP Type.
@@ -41,8 +41,8 @@ namespace {
     		return static_cast<uint16_t>(~sum);
 	}
 
-	int acquire_raw_socket(ostream& out, uint8_t ttl) {
-		int sock_fd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW);
+	int acquire_raw_icmp_socket(ostream& out, uint8_t ttl) {
+		int sock_fd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP); //IPPROTO_RAW);
 		if (sock_fd == -1) {
 			out << "> socket creating went wrong:" << endl;
 			out << "> " << strerror(errno) << endl;
@@ -232,8 +232,9 @@ namespace mtj_ping {
 		vector<node> result;
 		while (responded != ip_s_addr && try_number < _trace_tries_max) {
 			uint8_t ttl = try_number + 1;
-			int raw_sending_sock_fd = acquire_raw_socket(out, ttl);
-			if (raw_sending_sock_fd == -1) {
+			int icmp_sending_sock_fd = acquire_raw_icmp_socket(out, ttl);
+			int raw_recieving_sock_fd = acquire_raw_icmp_socket(out);
+			if (icmp_sending_sock_fd == -1) {
 				out << "> could not acquire raw sending socket" << endl;
 				return vector<node> { node{ address, node_status::unknown, time(nullptr)}};
 			}
@@ -245,15 +246,14 @@ namespace mtj_ping {
 			sockaddr_in empty_hint;
 			sockaddr send_address;
 			resolve_addr_hint(ip_addr, &empty_hint, &send_address);
-			int s_result = sendto(raw_sending_sock_fd, &icmp_request_header, sizeof(icmp_request_header), 0, &send_address, sizeof(empty_hint));
+			int s_result = sendto(icmp_sending_sock_fd, &icmp_request_header, sizeof(icmp_request_header), 0, &send_address, sizeof(empty_hint));
 			if (s_result == -1) {
 				out << "> could not send icmp msg via acquired socket" << endl;
 				return vector<node> { node { address, node_status::unknown, time(nullptr)}};
 			}
 
-			close(raw_sending_sock_fd);
+			close(icmp_sending_sock_fd);
 
-			int raw_recieving_sock_fd = acquire_raw_icmp_socket(out);
 			uint8_t response_packet[icmpv4_max_packet_size] {};
 			sockaddr recieve_address;
 			socklen_t size_of_recieve_address = sizeof(empty_hint);
@@ -261,7 +261,6 @@ namespace mtj_ping {
 			&recieve_address, &size_of_recieve_address);
 			close(raw_recieving_sock_fd);
 
-// after recv, i got the errno = 11 (TRYAGAIN - look at the errrnobase.h)
 			node responded_srv = resolve_node_from_icmp_echo_answer(response_size, address, response_packet, out);
 			responded = responded_srv.get_addr();
 			result.push_back(responded_srv);

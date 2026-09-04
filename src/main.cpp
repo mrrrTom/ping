@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include "command.hpp"
-
+#include <sstream>
 using namespace mtj_ping;
 using namespace std;
 namespace {
@@ -27,14 +27,22 @@ namespace {
 	}
 
 	void trace(command&cmd, ui ui, i_network nw) {
-		vector<node> response = nw.trace(cmd.arg, ui.out_);
+		string debug_info;
+		stringstream ss{debug_info};
+		vector<node> response = nw.trace(cmd.arg, ss);
 		if (response.size() == 0)
 			ui.out_ << "> trace failed, no node found" << endl;
 		for (int i = 0; i < response.size(); ++i) {
 			node nd = response[i];
 			time_t time_stamp = nd.get_last_changed();
-			ui.out_ << "> responded " << nd.get_addr() << " at "
+			if (nd.get_status() == node_status::active) {
+				ui.out_ << "> responded " << nd.get_addr() << " at "
 				<< ctime(&time_stamp) << endl;
+			}
+			else {
+				ui.out_ << "> ************** " << nd.get_addr() << " at "
+					<< ctime(&time_stamp) << endl;
+			}
 		}
 	}
 }
@@ -54,7 +62,6 @@ int main (int argc, char *argv[]) {
 			}
 			case command_type::trace:
 				trace(cmd, ui, nw);
-				nds = nw.trace(cmd.arg, ui.out_);
 				break;
 			default:
 				ui.out_

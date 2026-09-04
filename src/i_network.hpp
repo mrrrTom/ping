@@ -21,7 +21,7 @@ namespace mtj_ping {
 		private:
 			const string _net_devices_dir = "/sys/class/net/";
 			const string _state_file_name = "operstate";
-			const int _trace_tries_max = 100;
+			const int _trace_tries_max = 30;
 		public:
 			node ping(string address, ostream& out);
 			vector<node> trace(string address, ostream& out);
